@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>3DSideHustle — Door Sign Designer</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><rect x='2' y='1' width='12' height='14' rx='2' fill='none' stroke='%23a855f7' stroke-width='2'/><text x='8' y='11.5' font-size='9' font-weight='bold' text-anchor='middle' fill='%23a855f7'>E</text></svg>" />
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <header class="topbar">
+      <h1><span class="logo">🚪</span> 3DSideHustle <span class="accent">Door Sign Designer</span></h1>
+      <div class="topbar-actions">
+        <button type="button" class="btn" id="reset-btn">↺ Reset</button>
+        <button type="button" class="btn btn-primary" id="export-btn" disabled>⬇ Export STL</button>
+      </div>
+    </header>
+
+    <main class="layout">
+      <div class="viewer-wrap">
+        <div id="viewer-box"></div>
+        <div id="viewer-hint">Loading fonts…</div>
+        <button type="button" class="btn btn-small" id="fit-btn" title="Frame the model">⤢ fit view</button>
+      </div>
+
+      <aside class="sidebar">
+        <section class="card">
+          <h2><span class="chip chip-blue">🅰</span> Name &amp; Monogram</h2>
+
+          <label class="field-label" for="name-input">Name</label>
+          <input type="text" id="name-input" maxlength="20" placeholder="Enter name (empty = letter only)" value="Emma" />
+
+          <label class="field-label" for="letter-input">Large Letter</label>
+          <input type="text" id="letter-input" maxlength="3" placeholder="e.g. E (empty = no letter)" value="E" />
+          <p class="hint">Leave the letter empty for a plain name sign, or the name empty for a monogram-only sign.</p>
+
+          <label class="field-label" for="name-font">Name Font</label>
+          <select id="name-font" class="select"></select>
+          <label class="field-label" for="letter-font">Letter Font</label>
+          <select id="letter-font" class="select"></select>
+
+          <label class="field-label">Upload Font</label>
+          <button type="button" class="btn btn-wide btn-accent" id="font-btn">📁 Choose Font Files</button>
+          <input type="file" id="font-files" accept=".ttf,.otf,.woff" multiple hidden />
+          <p class="hint">Uploaded fonts appear in both dropdowns.</p>
+        </section>
+
+        <section class="card">
+          <h2><span class="chip chip-pink">📐</span> Size &amp; Placement</h2>
+
+          <div class="slider-field">
+            <label for="name-size">Name Size <span class="val" id="name-size-val"></span></label>
+            <input type="range" id="name-size" min="10" max="100" step="0.5" value="35" />
+          </div>
+          <div class="slider-field">
+            <label for="letter-size">Letter Size <span class="val" id="letter-size-val"></span></label>
+            <input type="range" id="letter-size" min="30" max="250" step="1" value="100" />
+          </div>
+          <div class="slider-field">
+            <label for="letter-spacing">Name Letter Spacing <span class="val" id="letter-spacing-val"></span></label>
+            <input type="range" id="letter-spacing" min="-3" max="8" step="0.1" value="0" />
+          </div>
+          <div class="slider-field">
+            <label for="off-x">Name Offset X <span class="val" id="off-x-val"></span></label>
+            <input type="range" id="off-x" min="-80" max="80" step="0.5" value="0" />
+          </div>
+          <div class="slider-field">
+            <label for="off-y">Name Offset Y <span class="val" id="off-y-val"></span></label>
+            <input type="range" id="off-y" min="-80" max="80" step="0.5" value="0" />
+          </div>
+          <p class="hint">Or drag the name in the preview — the sliders follow.</p>
+        </section>
+
+        <section class="card">
+          <h2><span class="chip chip-red">🧩</span> Assembly Fit</h2>
+
+          <div class="slider-field">
+            <label for="fit-gap">Fit Gap (clearance) <span class="val" id="fit-gap-val"></span></label>
+            <input type="range" id="fit-gap" min="0" max="3" step="0.05" value="0.2" />
+          </div>
+          <p class="hint">The letter gets the name's outline cut out, enlarged by this gap on every side — print the two pieces separately, slide the name into the cutout and glue it. ~0.15–0.3&nbsp;mm fits snugly on most printers.</p>
+
+          <div class="slider-field">
+            <label for="hole-fill">Hole Fill Threshold <span class="val" id="hole-fill-val"></span></label>
+            <input type="range" id="hole-fill" min="0" max="20" step="0.5" value="2" />
+          </div>
+        </section>
+
+        <section class="card">
+          <h2><span class="chip chip-green">🎨</span> Appearance &amp; Heights</h2>
+
+          <label class="field-label">Colors (preview only)</label>
+          <div class="color-row">
+            <label class="color-box"><input type="color" id="letter-color" value="#7fd4c4" /><span>Letter</span></label>
+            <label class="color-box"><input type="color" id="name-color" value="#f6b8d0" /><span>Name</span></label>
+          </div>
+
+          <div class="slider-field">
+            <label for="letter-h">Letter Thickness <span class="val" id="letter-h-val"></span></label>
+            <input type="range" id="letter-h" min="1" max="15" step="0.2" value="5" />
+          </div>
+          <div class="slider-field">
+            <label for="name-h">Name Thickness <span class="val" id="name-h-val"></span></label>
+            <input type="range" id="name-h" min="1" max="15" step="0.2" value="6" />
+          </div>
+          <p class="hint">Both pieces print flat on the plate. A name slightly thicker than the letter stands proud, like the classic layered look.</p>
+        </section>
+
+        <section class="card">
+          <h2><span class="chip chip-purple">⬇</span> Export</h2>
+
+          <label class="field-label" id="folder-label">Save Folder</label>
+          <button type="button" class="btn btn-wide" id="folder-btn">📁 Choose Save Folder</button>
+          <p class="hint" id="folder-name">Not set — exports download normally</p>
+
+          <div class="size-row"><span>Model size</span><span id="size-readout" class="mono accent2">—</span></div>
+          <div class="size-row"><span>Triangles</span><span id="tri-readout" class="mono accent2">—</span></div>
+
+          <button type="button" class="btn btn-wide btn-accent" id="export-combined" disabled>⬇ Export STL (assembled)</button>
+          <button type="button" class="btn btn-wide" id="export-separate" disabled>⬇ Letter + name as separate STLs</button>
+          <p class="hint">Separate STLs are the pieces to print: the letter with the name-shaped cutout, and the name that slides into it. Color here is preview-only — STL has no color.</p>
+          <p class="hint" id="export-note"></p>
+        </section>
+      </aside>
+    </main>
+
+    <script type="module" src="/fable_output/Main.js"></script>
+  </body>
+</html>
