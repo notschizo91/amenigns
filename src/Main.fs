@@ -170,12 +170,15 @@ let private buildTextShapes (font: obj) (txt: string) (size: float) (spacing: fl
     let trimmed = txt.Trim ()
     if trimmed = "" then []
     else
-        // Union with a 0.05mm weld: script glyphs often only *touch* at a
-        // point (loop meeting a stem); the weld makes those joints real so
-        // the mesh is manifold and the printed piece can't hinge apart.
+        // Holes are classified glyph by glyph (an 'm' overlapping a script E
+        // must not read as a hole of the E), then everything is unioned with
+        // a 0.05mm weld: script glyphs often only *touch* at a point (loop
+        // meeting a stem); the weld makes those joints real so the mesh is
+        // manifold and the printed piece can't hinge apart.
         let shapes =
             TextShapes.textCommands font trimmed size spacing
-            |> TextShapes.commandShapes glyphTol 0.0
+            |> Array.toList
+            |> List.collect (TextShapes.commandShapes glyphTol 0.0)
             |> fun raw -> Clipper.toShapes (Clipper.unionWeld (Clipper.shapeRings raw) 0.05)
             |> List.map (fun s ->
                 { s with Holes = s.Holes |> List.filter (fun h -> abs (Rings.signedArea h) >= holeFill) })

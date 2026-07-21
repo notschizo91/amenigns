@@ -42,17 +42,22 @@ export function fontName(font) {
 }
 
 /**
- * Whole-string outline using the font's own metrics — advance widths and
- * kerning — so connected script fonts keep their letter joins intact
- * (per-glyph optical spacing would tear cursive strokes apart).
- * `letterSpacingMm` is extra advance per glyph in mm; opentype.js takes it
- * as a fraction of the font size, hence the division. Returns path commands
- * in mm, y-down, baseline at y=0, starting at x=0.
+ * Text laid out with the font's own metrics — advance widths and kerning —
+ * so connected script fonts keep their letter joins intact (per-glyph
+ * optical spacing would tear cursive strokes apart). `letterSpacingMm` is
+ * extra advance per glyph in mm; opentype.js takes it as a fraction of the
+ * font size, hence the division.
+ *
+ * Returns one command array PER GLYPH (positioned, mm, y-down, baseline at
+ * y=0) rather than one merged outline: hole classification is containment
+ * based, so overlapping glyphs must be classified separately — an 'm'
+ * starting inside a script E would otherwise be mistaken for a hole of the
+ * E and carved away. The glyph shapes are unioned after classification.
  */
 export function textCommands(font, text, sizeMm, letterSpacingMm) {
-  const path = font.getPath(text, 0, 0, sizeMm, {
+  const paths = font.getPaths(text, 0, 0, sizeMm, {
     kerning: true,
     letterSpacing: sizeMm > 0 ? letterSpacingMm / sizeMm : 0,
   });
-  return path.commands;
+  return paths.map((p) => p.commands);
 }

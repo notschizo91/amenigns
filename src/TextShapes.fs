@@ -17,10 +17,12 @@ let parseFontBuffer (buffer: obj) : obj = jsNative
 [<Import("fontName", "./text-helpers.js")>]
 let fontName (font: obj) : string = jsNative
 
-/// Whole-string outline commands using the font's own advance widths and
-/// kerning, so cursive joins survive. Baseline at y=0, mm units, y-down.
+/// Per-glyph outline commands (already positioned) using the font's own
+/// advance widths and kerning, so cursive joins survive. One command array
+/// per glyph — overlapping glyphs must be hole-classified separately.
+/// Baseline at y=0, mm units, y-down.
 [<Import("textCommands", "./text-helpers.js")>]
-let textCommands (font: obj) (text: string) (sizeMm: float) (letterSpacingMm: float) : obj array = jsNative
+let textCommands (font: obj) (text: string) (sizeMm: float) (letterSpacingMm: float) : obj array array = jsNative
 
 /// opentype.js path commands -> flattened subpaths (y-down mm coordinates).
 let commandsToSubpaths (tol: float) (commands: obj array) : Subpath list =

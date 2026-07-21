@@ -187,6 +187,18 @@ try {
   );
   await setSlider('off-x', '0');
 
+  // Overlapping glyphs must merge, not carve: an 'm' starting inside the
+  // script E once got misclassified as a hole of the E and cut away. With
+  // per-glyph classification, spreading the letters apart (no overlaps)
+  // changes the name's volume only by the small merged join areas.
+  await setSlider('letter-spacing', '6');
+  const spread = parseStl((await downloadAll('#export-separate', 2))['Emma-name.stl']);
+  check(
+    spread.volume - name.volume < spread.volume * 0.1 && spread.volume > name.volume - 1,
+    `overlapping script glyphs merge instead of carving (tight ${name.volume.toFixed(0)} vs spread ${spread.volume.toFixed(0)} mm³)`
+  );
+  await setSlider('letter-spacing', '0');
+
   // --- Door sign without the large letter ---
   await page.fill('#letter-input', '');
   await page.dispatchEvent('#letter-input', 'input');
