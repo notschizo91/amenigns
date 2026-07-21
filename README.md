@@ -16,7 +16,10 @@ The two pieces are designed to be **printed separately and glued**:
 
 - The **letter piece** gets the name's outline *cut all the way through*,
   dilated by the **Fit Gap** slider (default 0.2 mm) — a true
-  outline-to-outline clearance on every side.
+  outline-to-outline clearance on every side. Letter material inside a
+  closed name counter (the hole of a D or O) survives as a small island
+  piece with the same clearance, so the sign has no see-through voids —
+  the island glues into that counter during assembly.
 - The **name piece** is the plain script name.
 - Both print flat on the plate. Slide the name into the letter's cutout and
   glue it — the gap makes it an easy slip fit; ~0.15–0.3 mm suits most

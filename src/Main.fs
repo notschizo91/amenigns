@@ -116,21 +116,21 @@ let private rebuildAssembly () =
         nameShapesCache
         |> List.map (Geometry.mapShape (fun p -> { X = p.X + offX; Y = p.Y + offY }))
 
-    // The letter piece: monogram minus the name outline dilated by the fit
-    // gap. The separately printed name then slides into the pocket with
-    // `fitGap` mm of clearance all round, ready for glue. Dilating only the
-    // outer rings (holes ignored) means no stranded letter islands inside
-    // name counters.
+    // The letter piece: monogram minus the name's true shape dilated by the
+    // fit gap. The separately printed name then slides into the pocket with
+    // `fitGap` mm of clearance all round, ready for glue. Dilating the full
+    // shape (holes negative) grows the outline but *shrinks* the counters,
+    // so letter material inside a closed counter (the hole of a D or O)
+    // survives as an island piece with the same clearance — it glues into
+    // that counter during assembly instead of leaving a see-through void.
+    // Crumbs under 1mm² are culled; they aren't printable anyway.
     let letterPiece =
         if letterShapesCache.IsEmpty then []
         elif placedName.IsEmpty then letterShapesCache
         else
-            let cutter =
-                placedName
-                |> List.map (fun s -> s.Outer)
-                |> Array.ofList
-                |> fun outers -> Clipper.offsetUnion outers fitGap
+            let cutter = Clipper.offsetUnion (Clipper.shapeRings placedName) fitGap
             Clipper.toShapes (Clipper.combine (Clipper.shapeRings letterShapesCache) cutter "difference")
+            |> List.filter (fun s -> abs (Rings.signedArea s.Outer) >= 1.0)
 
     let extrudeAll (shapes: Shape list) (height: float) : float array =
         if shapes.IsEmpty then [||]

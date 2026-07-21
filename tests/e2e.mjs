@@ -187,6 +187,37 @@ try {
   );
   await setSlider('off-x', '0');
 
+  // Letter material inside a closed name counter must survive as a glue-in
+  // island, not become a see-through void: a fat Baloo "D" centered on the
+  // letter leaves its counter over solid letter — the letter STL must still
+  // have material at the counter's location (the origin).
+  await page.selectOption('#name-font', '2'); // Baloo 2
+  await page.fill('#name-input', 'D');
+  await page.dispatchEvent('#name-input', 'input');
+  await setSlider('name-size', '60');
+  const dFiles = await downloadAll('#export-separate', 2);
+  const dLetter = dFiles['D-letter.stl'];
+  {
+    const triCount = dLetter.readUInt32LE(80);
+    let islandTris = 0;
+    for (let t = 0; t < triCount; t++) {
+      const o = 84 + 50 * t + 12;
+      let inside = true;
+      for (let k = 0; k < 3; k++) {
+        const x = dLetter.readFloatLE(o + 12 * k);
+        const y = dLetter.readFloatLE(o + 12 * k + 4);
+        if (Math.abs(x) > 5 || Math.abs(y) > 5) inside = false;
+      }
+      if (inside) islandTris++;
+    }
+    check(islandTris > 0, `letter keeps a glue-in island inside the D's counter (${islandTris} tris near origin)`);
+  }
+  check(parseStl(dLetter).badEdges === 0, 'letter with counter island watertight');
+  await page.selectOption('#name-font', '0'); // back to Pacifico
+  await page.fill('#name-input', 'Emma');
+  await page.dispatchEvent('#name-input', 'input');
+  await setSlider('name-size', '35');
+
   // Overlapping glyphs must merge, not carve: an 'm' starting inside the
   // script E once got misclassified as a hole of the E and cut away. With
   // per-glyph classification, spreading the letters apart (no overlaps)
