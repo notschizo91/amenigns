@@ -132,7 +132,7 @@ try {
   check(c.bytesOk, `byte length matches triangle count (${c.triCount} tris)`);
   check(c.triCount > 1000, 'non-trivial triangle count');
   check(Math.abs(c.minZ) < 1e-4, `model sits on z=0 (minZ=${c.minZ})`);
-  check(Math.abs(c.maxZ - 6) < 1e-3, `total height is the name thickness 6mm (maxZ=${c.maxZ})`);
+  check(Math.abs(c.maxZ - 8) < 1e-3, `total height is back wall + name = 8mm (maxZ=${c.maxZ})`);
   check(c.volume > 0, `outward-facing normals (volume=${c.volume.toFixed(0)} mm³)`);
   check(c.badEdges === 0, `watertight (${c.badEdges} bad edges)`);
 
@@ -145,7 +145,7 @@ try {
   const letter = parseStl(named['Emma-letter.stl']);
   const name = parseStl(named['Emma-name.stl']);
   check(Math.abs(letter.maxZ - 5) < 1e-3 && Math.abs(letter.minZ) < 1e-4, `letter spans 0..5mm (${letter.minZ}..${letter.maxZ})`);
-  check(Math.abs(name.maxZ - 6) < 1e-3 && Math.abs(name.minZ) < 1e-4, `name spans 0..6mm (${name.minZ}..${name.maxZ})`);
+  check(Math.abs(name.maxZ - 8) < 1e-3 && Math.abs(name.minZ - 2) < 1e-3, `name seats on the 2mm back wall, spans 2..8mm (${name.minZ}..${name.maxZ})`);
   check(letter.badEdges === 0 && name.badEdges === 0, 'both separate STLs watertight');
   check(
     Math.abs(letter.volume + name.volume - c.volume) < 1,
@@ -178,6 +178,24 @@ try {
   check(wideGap.badEdges === 0, 'wide-gap letter watertight');
   await setSlider('fit-gap', '0.2');
 
+  // Back wall: the letter stays solid under the pocket. Turning it off (0mm)
+  // is a through-cut: the name drops to the plate and the letter loses the
+  // slab under the name.
+  await setSlider('back-h', '0');
+  const throughFiles = await downloadAll('#export-separate', 2);
+  const throughLetter = parseStl(throughFiles['Emma-letter.stl']);
+  const throughName = parseStl(throughFiles['Emma-name.stl']);
+  check(
+    Math.abs(throughName.minZ) < 1e-4 && Math.abs(throughName.maxZ - 6) < 1e-3,
+    `back wall 0 -> through-cut, name on the plate (${throughName.minZ}..${throughName.maxZ})`
+  );
+  check(
+    throughLetter.volume < letter.volume - 100,
+    `back wall keeps solid material under the pocket (through ${throughLetter.volume.toFixed(0)} vs walled ${letter.volume.toFixed(0)} mm³)`
+  );
+  check(throughLetter.badEdges === 0, 'through-cut letter watertight');
+  await setSlider('back-h', '2');
+
   // Offset slider shifts the name piece in the export.
   await setSlider('off-x', '20');
   const shifted = parseStl((await downloadAll('#export-separate', 2))['Emma-name.stl']);
@@ -187,10 +205,11 @@ try {
   );
   await setSlider('off-x', '0');
 
-  // Letter material inside a closed name counter must survive as a glue-in
-  // island, not become a see-through void: a fat Baloo "D" centered on the
-  // letter leaves its counter over solid letter — the letter STL must still
-  // have material at the counter's location (the origin).
+  // Letter material inside a closed name counter must survive attached to
+  // the back wall, not become a see-through void: a fat Baloo "D" centered
+  // on the letter leaves its counter over solid letter — the letter STL
+  // must still have material at the counter's location (the origin), and
+  // *above* the 2mm back wall (the island stands in the D's hole).
   await page.selectOption('#name-font', '2'); // Baloo 2
   await page.fill('#name-input', 'D');
   await page.dispatchEvent('#name-input', 'input');
@@ -206,11 +225,12 @@ try {
       for (let k = 0; k < 3; k++) {
         const x = dLetter.readFloatLE(o + 12 * k);
         const y = dLetter.readFloatLE(o + 12 * k + 4);
-        if (Math.abs(x) > 5 || Math.abs(y) > 5) inside = false;
+        const z = dLetter.readFloatLE(o + 12 * k + 8);
+        if (Math.abs(x) > 5 || Math.abs(y) > 5 || z < 2.5) inside = false;
       }
       if (inside) islandTris++;
     }
-    check(islandTris > 0, `letter keeps a glue-in island inside the D's counter (${islandTris} tris near origin)`);
+    check(islandTris > 0, `letter keeps an island inside the D's counter, standing on the back wall (${islandTris} tris near origin above 2.5mm)`);
   }
   check(parseStl(dLetter).badEdges === 0, 'letter with counter island watertight');
   await page.selectOption('#name-font', '0'); // back to Pacifico

@@ -43,6 +43,9 @@ let mutable private letterSize = 100.0
 let mutable private letterSpacing = 0.0
 /// Clearance between the name outline and the letter's cutout walls, mm.
 let mutable private fitGap = 0.2
+/// Solid back wall the letter keeps under the name pocket, mm (0 = cut
+/// all the way through).
+let mutable private backH = 2.0
 let mutable private holeFill = 2.0
 /// Name centre relative to the letter centre (the letter sits at the origin).
 let mutable private offX = 0.0
@@ -116,13 +119,13 @@ let private rebuildAssembly () =
         nameShapesCache
         |> List.map (Geometry.mapShape (fun p -> { X = p.X + offX; Y = p.Y + offY }))
 
-    // The letter piece: monogram minus the name's true shape dilated by the
-    // fit gap. The separately printed name then slides into the pocket with
+    // The pocket walls: monogram minus the name's true shape dilated by the
+    // fit gap. The separately printed name then presses into the pocket with
     // `fitGap` mm of clearance all round, ready for glue. Dilating the full
     // shape (holes negative) grows the outline but *shrinks* the counters,
     // so letter material inside a closed counter (the hole of a D or O)
-    // survives as an island piece with the same clearance — it glues into
-    // that counter during assembly instead of leaving a see-through void.
+    // survives with the same clearance — standing on the back wall instead
+    // of leaving a see-through void.
     // Crumbs under 1mm² are culled; they aren't printable anyway.
     let letterPiece =
         if letterShapesCache.IsEmpty then []
@@ -132,16 +135,31 @@ let private rebuildAssembly () =
             Clipper.toShapes (Clipper.combine (Clipper.shapeRings letterShapesCache) cutter "difference")
             |> List.filter (fun s -> abs (Rings.signedArea s.Outer) >= 1.0)
 
-    let extrudeAll (shapes: Shape list) (height: float) : float array =
-        if shapes.IsEmpty then [||]
+    let extrudeAll (shapes: Shape list) (height: float) (lift: float) : float array =
+        if shapes.IsEmpty || height < 0.05 then [||]
         else
             let acc = ResizeArray<float>()
             for s in shapes do
                 let p, _ = Geometry.extrude s height
-                acc.AddRange p
+                acc.AddRange (Geometry.translateZ lift p)
             acc.ToArray()
-    letterPositions <- extrudeAll letterPiece letterH
-    namePositions <- extrudeAll placedName nameH
+
+    // The letter is a solid back-wall slab (full letter footprint, 0..backH)
+    // plus the pocket walls on top of it — sunk 0.2mm into the slab so the
+    // two solids genuinely overlap: exactly-coincident faces make slicers
+    // produce gaps and chewed edges, a real overlap slices cleanly. With the
+    // back wall at 0 the pocket is a through-cut like a stencil.
+    let effBack = min backH letterH
+    let upperH = letterH - effBack
+    let sink = if effBack >= 0.05 && upperH >= 0.05 then min 0.2 (effBack / 2.0) else 0.0
+    letterPositions <-
+        Array.append
+            (extrudeAll letterShapesCache effBack 0.0)
+            (extrudeAll letterPiece (upperH + sink) (effBack - sink))
+    // The name rests on the pocket floor (the back wall) when there is a
+    // letter, on the plate otherwise.
+    let nameLift = if letterShapesCache.IsEmpty then 0.0 else effBack
+    namePositions <- extrudeAll placedName nameH nameLift
 
     // Name drag zone: bounding circle of the placed name.
     match Geometry.bounds placedName with
@@ -304,7 +322,7 @@ let private setOffset (x: float) (y: float) =
 
 let private defaults = [
     "name-size", "35"; "letter-size", "100"; "letter-spacing", "0"
-    "off-x", "0"; "off-y", "0"; "fit-gap", "0.2"; "hole-fill", "2"
+    "off-x", "0"; "off-y", "0"; "fit-gap", "0.2"; "back-h", "2"; "hole-fill", "2"
     "letter-h", "5"; "name-h", "6" ]
 
 let private fmtFor (id: string) (v: float) =
@@ -407,6 +425,7 @@ let private init () =
     bindSlider "off-x" mm (fun v -> offX <- v; scheduleMeshes ())
     bindSlider "off-y" mm (fun v -> offY <- v; scheduleMeshes ())
     bindSlider "fit-gap" (fmtFor "fit-gap") (fun v -> fitGap <- v; scheduleMeshes ())
+    bindSlider "back-h" mm (fun v -> backH <- v; scheduleMeshes ())
     bindSlider "letter-h" mm (fun v -> letterH <- v; scheduleMeshes ())
     bindSlider "name-h" mm (fun v -> nameH <- v; scheduleMeshes ())
 
@@ -423,6 +442,7 @@ let private init () =
             offX <- 0.0
             offY <- 0.0
             fitGap <- 0.2
+            backH <- 2.0
             holeFill <- 2.0
             letterH <- 5.0
             nameH <- 6.0

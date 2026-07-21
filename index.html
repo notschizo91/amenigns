@@ -78,7 +78,11 @@
             <label for="fit-gap">Fit Gap (clearance) <span class="val" id="fit-gap-val"></span></label>
             <input type="range" id="fit-gap" min="0" max="3" step="0.05" value="0.2" />
           </div>
-          <p class="hint">The letter gets the name's outline cut out, enlarged by this gap on every side — print the pieces separately, slide the name into the cutout and glue it. ~0.15–0.3&nbsp;mm fits snugly on most printers. Letter material inside a closed counter (the hole of a D or O) stays as a small extra piece that glues into that hole.</p>
+          <div class="slider-field">
+            <label for="back-h">Back Wall <span class="val" id="back-h-val"></span></label>
+            <input type="range" id="back-h" min="0" max="5" step="0.2" value="2" />
+          </div>
+          <p class="hint">The name's outline is cut into the letter's face, enlarged by the fit gap on every side, but the bottom of the letter stays solid (back wall) — press the name into the pocket, it seats against the wall, glue it. ~0.15–0.3&nbsp;mm gap fits snugly on most printers. Back wall 0 cuts all the way through like a stencil.</p>
 
           <div class="slider-field">
             <label for="hole-fill">Hole Fill Threshold <span class="val" id="hole-fill-val"></span></label>
@@ -103,7 +107,7 @@
             <label for="name-h">Name Thickness <span class="val" id="name-h-val"></span></label>
             <input type="range" id="name-h" min="1" max="15" step="0.2" value="6" />
           </div>
-          <p class="hint">Both pieces print flat on the plate. A name slightly thicker than the letter stands proud, like the classic layered look.</p>
+          <p class="hint">Both pieces print flat on the plate. The name seats on the back wall, so it stands proud by its thickness minus the pocket depth (letter − back wall) — the classic layered look.</p>
         </section>
 
         <section class="card">

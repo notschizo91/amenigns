@@ -14,17 +14,18 @@ earcut extrusion → binary STL).
 
 The two pieces are designed to be **printed separately and glued**:
 
-- The **letter piece** gets the name's outline *cut all the way through*,
-  dilated by the **Fit Gap** slider (default 0.2 mm) — a true
-  outline-to-outline clearance on every side. Letter material inside a
-  closed name counter (the hole of a D or O) survives as a small island
-  piece with the same clearance, so the sign has no see-through voids —
-  the island glues into that counter during assembly.
+- The **letter piece** gets the name's outline cut into its face as a
+  *pocket*, dilated by the **Fit Gap** slider (default 0.2 mm) — a true
+  outline-to-outline clearance on every side — while the bottom of the
+  letter stays solid (**Back Wall** slider, default 2 mm). Letter material
+  inside a closed name counter (the hole of a D or O) survives with the
+  same clearance, standing attached to the back wall, so the sign has no
+  see-through voids. Back wall 0 cuts all the way through like a stencil.
 - The **name piece** is the plain script name.
-- Both print flat on the plate. Slide the name into the letter's cutout and
-  glue it — the gap makes it an easy slip fit; ~0.15–0.3 mm suits most
-  printers. Make the name a little thicker than the letter and it stands
-  proud, like the classic Etsy look.
+- Both print flat on the plate. Press the name into the pocket — it seats
+  against the back wall, ready for glue; ~0.15–0.3 mm gap suits most
+  printers. The name stands proud by its thickness minus the pocket depth,
+  like the classic Etsy look.
 
 Leave the **letter empty** for a plain script name sign, or the **name
 empty** for a monogram-only sign — every combination exports cleanly.
